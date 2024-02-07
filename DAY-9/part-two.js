@@ -5,50 +5,58 @@ let inputString = fs
   .split('\r\n')
   .map(el => el.split(' ').map(Number))
 
-let values = 0
+function returnFinalPerdict (nextArr) {
+  let firstValPredict = 0
 
-for (let i = 0; i < inputString.length; i++) {
-  {
-    let elementsAreNotZero = true
+  let len = nextArr.length - 2
 
-    let nextArr = [inputString[i]]
+  for (let j = len; j >= 0; j--) {
+    const currentSecondToLast = nextArr[j][0]
+    const lastFromBottomArr = nextArr[j + 1][0]
 
-    while (elementsAreNotZero) {
-      let newArray = []
-
-      let areElementsZero = true
-
-      for (let j = 0; j < nextArr[nextArr.length - 1].length - 1; j++) {
-        let currElement = nextArr[nextArr.length - 1][j]
-        let nextElem = nextArr[nextArr.length - 1][j + 1]
-
-        let diff = nextElem - currElement
-
-        newArray.push(diff)
-
-        if (diff !== 0) areElementsZero = false
-      }
-      nextArr.push(newArray)
-
-      if (areElementsZero) {
-        elementsAreNotZero = false
-      }
-    }
-
-    let value = 0
-
-    let len = nextArr.length - 2
-
-    for (let j = len; j >= 0; j--) {
-      const currentSecondToLastElem = nextArr[j][0]
-      const lastElemFromBottomArr = nextArr[j + 1]?.length
-        ? nextArr[j + 1][0]
-        : 0
-
-      value = currentSecondToLastElem - lastElemFromBottomArr
-      nextArr[j].unshift(value)
-    }
-    values += value
+    firstValPredict = currentSecondToLast - lastFromBottomArr
+    nextArr[j].unshift(firstValPredict)
   }
+  return firstValPredict
 }
-console.log(values)
+
+function setupLineMatrix (line) {
+  let nextArr = [line]
+  let allElementsAreNotZero = true
+
+  while (allElementsAreNotZero) {
+    let latestBranch = []
+
+    let areAllZero = true
+
+    let lastElement = nextArr[nextArr.length - 1]
+
+    for (let j = 0; j < lastElement.length - 1; j++) {
+      let currElement = lastElement[j]
+      let nextElem = lastElement[j + 1]
+
+      let diff = nextElem - currElement
+
+      latestBranch.push(diff)
+
+      if (diff !== 0) areAllZero = false
+    }
+    nextArr.push(latestBranch)
+    if (areAllZero) allElementsAreNotZero = false
+  }
+  return nextArr
+}
+
+function returnPerdictOfLine (line) {
+  const nextArr = setupLineMatrix(line)
+
+  let firstValPredict = returnFinalPerdict(nextArr)
+
+  return firstValPredict
+}
+
+const reducedValsPredicts = inputString
+  .map(returnPerdictOfLine)
+  .reduce((total, curr) => (total += curr))
+
+console.log(reducedValsPredicts)
