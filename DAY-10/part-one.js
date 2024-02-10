@@ -1,6 +1,6 @@
 const { readFileSync } = require('fs')
 
-let inputArray = readFileSync('input', 'utf-8').split('\r\n')
+let inputArray = readFileSync('sample', 'utf-8').split('\r\n')
 
 let startingPosCol = inputArray.findIndex(el => el.indexOf('S') >= 0)
 let startingPosRow = inputArray[startingPosCol].indexOf('S')
@@ -36,8 +36,6 @@ function findAdjacentElements (col, row) {
   }, [])
 }
 
-let step = 0
-
 const CharDirs = {
   J: {
     checkArrTrue: [-1, 0],
@@ -66,44 +64,53 @@ const CharDirs = {
 }
 
 function pathMove (col, row) {
+  console.log(inputArray[col][row])
   let curCol = col
   let curRow = row
-  let currentEl = inputArray[curCol][curRow]
-  const isNotVisited = (col = curCol, row = curRow) =>
-    !visited.some(([elc, elr]) => elc === col && elr === row) &&
-    inputArray[col][row] !== 'S'
+  let currentEl = inputArray[col][row]
+  const isVisited = (col, row) =>
+    visited.some(([elc, elr]) => elc === col && elr === row) ||
+    inputArray[col][row] === 'S'
 
   function updateCordinates (col, row) {
+    console.log(col, row)
     if (!visited.find(([elc, elr]) => elc === curCol && elr === curRow))
       visited.push([curCol, curRow])
-    curCol = col ?? curCol
-    curRow = row ?? curRow
-    return [curCol, curRow]
+    return [col, row]
   }
 
   const ObjectElement = CharDirs[currentEl]
+  if (!ObjectElement) return [curCol, curRow]
   const { checkArrFalse, checkArrTrue } = ObjectElement
 
-  if (!isNotVisited(checkArrTrue[0], checkArrTrue[1]))
-    return updateCordinates(checkArrTrue[0], checkArrTrue[1])
+  const beenVisited = isVisited(
+    checkArrTrue[0] + curCol,
+    checkArrTrue[1] + curRow
+  )
+  if (beenVisited)
+    updateCordinates(checkArrTrue[0] + curCol, checkArrTrue[1] + curRow)
+
   return updateCordinates(checkArrFalse[0] + curCol, checkArrFalse[1] + curRow)
 }
 
 let element = null
 
-const startingPaths = findAdjacentElements(startingPosCol, startingPosRow)
+const [firstPath, secondPath] = findAdjacentElements(
+  startingPosCol,
+  startingPosRow
+)
 
-let [firstPath, secondPath] = startingPaths
+const visited = []
 let [fircol, firrow] = firstPath
 let [seccol, secrow] = secondPath
-const visited = []
+
+let step = 0
 
 while (!element) {
   ;[fircol, firrow] = pathMove(fircol, firrow)
   ;[seccol, secrow] = pathMove(seccol, secrow)
+  step++
 
-  if (fircol === seccol && firrow === secrow) {
-    console.log((step += 1))
-    break
-  }
+  if (fircol === seccol && firrow === secrow) element = 'BOY'
 }
+console.log(step + 1)
