@@ -5,133 +5,104 @@ let inputArray = readFileSync('input', 'utf-8').split('\r\n')
 let startingPosCol = inputArray.findIndex(el => el.indexOf('S') >= 0)
 let startingPosRow = inputArray[startingPosCol].indexOf('S')
 
-function findAdjacentElements (col, row) {
-  const paths = []
-
-  // Top El
-  let topEL = inputArray[col - 1][row]
-
-  if (
-    topEL &&
-    inputArray[col - 1][row] !== '.' &&
-    (topEL === '|' || topEL === '7' || topEL === 'F' || topEL === 'J')
-  )
-    paths.push([col - 1, row])
-
-  // Right Side
-  let rightEl = inputArray[col][row + 1]
-  if (
-    rightEl &&
-    rightEl !== '.' &&
-    (rightEl === '-' || rightEl === '7' || rightEl === 'J')
-  )
-    paths.push([col, row + 1])
-
-  // left Side
-  let leftEl = inputArray[col][row - 1]
-  if (
-    leftEl &&
-    leftEl !== '.' &&
-    (leftEl === '-' || leftEl === 'L' || leftEl === 'F')
-  )
-    paths.push([col, row - 1])
-
-  // bottom El
-  let bottomEL = inputArray[col + 1][row]
-
-  if (
-    bottomEL &&
-    inputArray[col + 1][row] !== '.' &&
-    (bottomEL === '|' ||
-      bottomEL === 'L' ||
-      bottomEL === '7' ||
-      bottomEL === 'F')
-  )
-    paths.push([col + 1, row])
-
-  return paths
+const directions = {
+  TOP: {
+    chars: ['7', 'F', 'J', '|'],
+    dir: [-1, 0]
+  },
+  RIGHT: {
+    chars: ['-', '7', 'J'],
+    dir: [0, +1]
+  },
+  LEFT: {
+    chars: ['-', 'L', 'F'],
+    dir: [0, -1]
+  },
+  TOP: {
+    chars: ['7', 'F', 'L', '|'],
+    dir: [+1, 0]
+  }
 }
 
-const startingPaths = findAdjacentElements(startingPosCol, startingPosRow)
-console.log(startingPaths)
+function findAdjacentElements (col, row) {
+  return Object.keys(directions).reduce((total, curr) => {
+    const { chars, dir } = directions[curr]
+    const [dirCol, dirRow] = dir
+    const [newCol, newRow] = [col + dirCol, row + dirRow]
+    const newChar = inputArray[newCol][newRow]
+    const isAdjacent = chars.includes(newChar)
+    if (isAdjacent) total.push([newCol, newRow])
+    return total
+  }, [])
+}
 
-// ..F7.
-// .FJ|.
-// SJ.L7
-// |F--J
-// LJ...
+let step = 0
 
-const allVisited = []
-const firstVisited = []
-const secondVisited = []
-
-let [firstPath, secondPath] = startingPaths[0]
-let [fircol, firrow] = firstPath
-let [seccol, secrow] = secondPath
-
-while (true) {
-  ;[fircol, curcol] = pathMove(fircol, firrow)
-  ;[seccol, secrow] = pathMove(seccol, secrow)
-
-  firstVisited.push(fircol, curcol)
-  secondVisited.push(seccol, secrow)
-  if (
-    firstVisited.some(([col, row]) =>
-      secondVisited.find(([col2, row2]) => col === col2 && row === row2)
-    )
-  )
-    break
+const CharDirs = {
+  J: {
+    checkArrTrue: [-1, 0],
+    checkArrFalse: [0, -1]
+  },
+  L: {
+    checkArrTrue: [-1, 0],
+    checkArrFalse: [0, 1]
+  },
+  '|': {
+    checkArrTrue: [+1, 0],
+    checkArrFalse: [-1, 0]
+  },
+  F: {
+    checkArrTrue: [0, +1],
+    checkArrFalse: [+1, 0]
+  },
+  '-': {
+    checkArrTrue: [0, -1],
+    checkArrFalse: [0, +1]
+  },
+  7: {
+    checkArrTrue: [+1, 0],
+    checkArrFalse: [0, -1]
+  }
 }
 
 function pathMove (col, row) {
+  let curCol = col
+  let curRow = row
+  let currentEl = inputArray[curCol][curRow]
+  const isNotVisited = (col = curCol, row = curRow) =>
+    !visited.some(([elc, elr]) => elc === col && elr === row) &&
+    inputArray[col][row] !== 'S'
+
   function updateCordinates (col, row) {
-    if (!visited.find(([elc, elr]) => elc === currentCol && elr === currentRow))
-      visited.push([currentCol, currentRow])
-    currentCol = col || currentCol
-    currentRow = row || currentRow
-    currentEl = inputArray[currentCol][currentRow]
+    if (!visited.find(([elc, elr]) => elc === curCol && elr === curRow))
+      visited.push([curCol, curRow])
+    curCol = col ?? curCol
+    curRow = row ?? curRow
+    return [curCol, curRow]
   }
 
-  function findIfVisited (col, row) {
-    return visited.some(([elc, elr]) => {
-      return elc === col && elr === row
-    })
-  }
+  const ObjectElement = CharDirs[currentEl]
+  const { checkArrFalse, checkArrTrue } = ObjectElement
 
-  let currentCol = col
-  let currentRow = row
-  let currentEl = inputArray[currentCol][currentRow]
-  const visited = [[startingPosCol, startingPosRow]]
-
-  // console.log(visited)
-  if (currentEl === '|') {
-    if (findIfVisited(currentCol + 1, currentRow))
-      updateCordinates(currentCol - 1)
-    else updateCordinates(currentCol + 1)
-  }
-  // if the one above is in visited then go to right and if right is visited to left
-  else if (currentEl === 'L') {
-    if (findIfVisited(currentCol - 1, currentRow))
-      updateCordinates(currentCol, currentRow + 1)
-    else updateCordinates(currentCol - 1)
-  }
-  // if the one Left is in visited then go to right and if right is visited to left
-  else if (currentEl === 'J') {
-    if (findIfVisited(currentCol, currentRow - 1))
-      updateCordinates(currentCol - 1)
-    else updateCordinates(currentCol, currentRow - 1)
-  } else if (currentEl === 'F') {
-    if (findIfVisited(currentCol, currentRow + 1))
-      updateCordinates(currentCol + 1)
-    else updateCordinates(currentCol, currentRow + 1)
-  } else if (currentEl === '-') {
-    if (findIfVisited(currentCol, currentRow - 1))
-      updateCordinates(currentCol, currentRow + 1)
-    else updateCordinates(currentCol, currentRow - 1)
-  } else if (currentEl === '7') {
-    if (findIfVisited(currentCol + 1, currentRow))
-      updateCordinates(currentCol, currentRow - 1)
-    else updateCordinates(currentCol + 1)
-  }
-  return [currentCol, currentRow]
+  if (!isNotVisited(checkArrTrue[0], checkArrTrue[1]))
+    return updateCordinates(checkArrTrue[0], checkArrTrue[1])
+  return updateCordinates(checkArrFalse[0] + curCol, checkArrFalse[1] + curRow)
 }
+
+let element = null
+
+const startingPaths = findAdjacentElements(startingPosCol, startingPosRow)
+
+let [firstPath, secondPath] = startingPaths
+let [fircol, firrow] = firstPath
+let [seccol, secrow] = secondPath
+const visited = []
+
+while (!element) {
+  ;[fircol, firrow] = pathMove(fircol, firrow)
+  ;[seccol, secrow] = pathMove(seccol, secrow)
+
+  if (fircol === seccol && firrow === secrow) element = [fircol, firrow]
+  step++
+}
+console.log(element, (step += 1))
