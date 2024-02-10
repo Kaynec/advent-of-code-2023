@@ -102,7 +102,8 @@ while (!element) {
   ;[fircol, firrow] = pathMove(fircol, firrow)
   ;[seccol, secrow] = pathMove(seccol, secrow)
 
-  if (fircol === seccol && firrow === secrow) element = [fircol, firrow]
-  step++
+  if (fircol === seccol && firrow === secrow) {
+    console.log((step += 1))
+    break
+  }
 }
-console.log(element, (step += 1))
