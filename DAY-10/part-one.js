@@ -136,7 +136,7 @@ function recorsivePrinter (connected) {
         diffs = diffs.filter(
           el => el.element[0] !== col || el.element[1] !== row
         )
-        recorsivePrinter(itemFromDiff.connected)
+        if (itemFromDiff) recorsivePrinter(itemFromDiff.connected)
       }
     }
   }
@@ -147,24 +147,23 @@ function recorsivePrinter (connected) {
 function findAdjacentElementsOfdiffs (col, row, connected) {
   let isFalse = false
 
-  for (let key of Object.keys(directions)) {
+  objectLoop: for (let key of Object.keys(directions)) {
     const { dir } = directions[key]
     const [dirCol, dirRow] = dir
     const [newCol, newRow] = [col + dirCol, row + dirRow]
 
     if (!inputArray[newCol] || !inputArray[newCol][newRow]) {
       isFalse = true
-      return
+      continue objectLoop
     }
     if (visited.some(([elc, elr]) => newCol === elc && newRow === elr)) {
-      return
+      continue objectLoop
     }
 
     connected.push([newCol, newRow])
   }
 
   if (isFalse) {
-    console.log('hitting the edge')
     recorsivePrinter(connected)
   }
 }
@@ -186,5 +185,4 @@ for (let { element, connected } of diffs) {
   const [col, row] = element
   findAdjacentElementsOfdiffs(col, row, connected)
 }
-console.log(diffs, diffs.length)
-// console.log(inputArray)
+// console.log(diffs, diffs.length)
