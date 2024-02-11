@@ -1,5 +1,4 @@
 const { readFileSync } = require('fs')
-const { connect } = require('http2')
 
 let inputArray = readFileSync('sample', 'utf-8').split('\r\n')
 
@@ -8,11 +7,11 @@ let startingPosRow = inputArray[startingPosCol].indexOf('S')
 
 const directions = {
   TOP: {
-    chars: ['7', 'F', 'J', '|'],
+    chars: ['7', 'F', 'F', '|'],
     dir: [-1, 0]
   },
   BOTTOM: {
-    chars: ['7', 'F', 'L', '|'],
+    chars: ['J', 'L', '|'],
     dir: [+1, 0]
   },
   RIGHT: {
@@ -41,10 +40,10 @@ function findAdjacentElements (col, row) {
 }
 
 const startingPaths = findAdjacentElements(startingPosCol, startingPosRow)
-
 let [firstPath, secondPath] = startingPaths
 let [fircol, firrow] = firstPath
 let [seccol, secrow] = secondPath
+
 const visited = [[startingPosCol, startingPosRow]]
 
 let step = 0
@@ -122,56 +121,23 @@ for (let i = 0; i < visited.length - 1; i++) {
   }
 }
 
-// function recurse (col, row) {
-//   let tile = 0
-
-//   function walk (col, row) {
-//     // console.log(col, row, 'walking')
-//     if (!inputArray[col] || !inputArray[col][row]) {
-//       // console.log('not existo', col, row)
-//       return
-//     }
-//     if (inputArray[col] && inputArray[col][row]) {
-//       console.log('existo', inputArray[col][row])
-//       if (visited.find((elc, elr) => elc === col && elr === row)) {
-//         // console.log('existo in visito')
-
-//         return
-//       }
-//     }
-
-//     walk(col - 1, row)
-//     walk(col + 1, row)
-//     walk(col, row + 1)
-//     walk(col, row - 1)
-//   }
-//   walk(col, row)
-//   console.log({ tile })
-// }
-
-// recurse(3, 2)
-
-// for (let { element, diff } of [{ element: [3, 2], diff: 5 }]) {
-//   for (let i = 1; i <= diff; i++) {
-//     curr = inputArray[element[0]][element[1] + i]
-//   }
-// }
 let count = 0
 
 function recorsivePrinter (connected) {
   function recursive () {
-    while (connected.length) {
+    while (connected?.length) {
       const item = connected.pop()
-      let itemFromDiff = diffs.findIndex(
+      let itemFromDiff = diffs.find(
         el => el.element[0] === item[0] && el.element[1] === item[1]
       )
-      if (itemFromDiff >= 0) {
-        const [col, row] = diffs[itemFromDiff].element
+      if (itemFromDiff) {
+        const [col, row] = itemFromDiff.element
         inputArray[col][row] = '0'
-        diffs.splice(itemFromDiff, 1)
+        diffs = diffs.filter(
+          el => el.element[0] !== col || el.element[1] !== row
+        )
+        recorsivePrinter(itemFromDiff.connected)
       }
-
-      recorsivePrinter(diffs[itemFromDiff].connected)
     }
   }
 
@@ -181,23 +147,24 @@ function recorsivePrinter (connected) {
 function findAdjacentElementsOfdiffs (col, row, connected) {
   let isFalse = false
 
-  objectLoop: for (let key of Object.keys(directions)) {
+  for (let key of Object.keys(directions)) {
     const { dir } = directions[key]
     const [dirCol, dirRow] = dir
     const [newCol, newRow] = [col + dirCol, row + dirRow]
 
     if (!inputArray[newCol] || !inputArray[newCol][newRow]) {
       isFalse = true
-      continue objectLoop
+      return
     }
     if (visited.some(([elc, elr]) => newCol === elc && newRow === elr)) {
-      continue objectLoop
+      return
     }
 
     connected.push([newCol, newRow])
   }
 
   if (isFalse) {
+    console.log('hitting the edge')
     recorsivePrinter(connected)
   }
 }
@@ -219,4 +186,5 @@ for (let { element, connected } of diffs) {
   const [col, row] = element
   findAdjacentElementsOfdiffs(col, row, connected)
 }
-console.log(diffs)
+console.log(diffs, diffs.length)
+// console.log(inputArray)
