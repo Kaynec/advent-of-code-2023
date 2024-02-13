@@ -96,22 +96,29 @@ while (!element) {
   ;[fircol, firrow] = pathMove(fircol, firrow)
   ;[seccol, secrow] = pathMove(seccol, secrow)
 
-  if (fircol === seccol && firrow === secrow) element = [fircol, firrow]
+  if (fircol === seccol && firrow === secrow) {
+    element = [fircol, firrow]
+    visited.push([fircol, firrow])
+  }
   step++
 }
 
 let diffs = []
 
-visited.sort()
-let loopColLength = 0
-let loopRowLength = 0
+function sortedArray (a, b) {
+  if (b[0] === a[0]) {
+    return b[1] - a[1]
+  }
+  return b[0] - a[0]
+}
+
+visited.sort(sortedArray).reverse()
 
 for (let i = 0; i < visited.length - 1; i++) {
   const currentEl = visited[i]
   const nextEl = visited[i + 1]
   const rowDiff = nextEl[1] - currentEl[1] - 1
-  loopColLength = Math.max(loopColLength, nextEl[0])
-  loopRowLength = Math.max(loopRowLength, nextEl[1])
+
   if (rowDiff >= 1) {
     diffs.push({
       element: [currentEl[0], currentEl[1] + 1],
@@ -121,8 +128,6 @@ for (let i = 0; i < visited.length - 1; i++) {
   }
 }
 
-let count = 0
-
 function recorsivePrinter (connected) {
   function recursive () {
     while (connected?.length) {
@@ -130,9 +135,14 @@ function recorsivePrinter (connected) {
       let itemFromDiff = diffs.find(
         el => el.element[0] === item[0] && el.element[1] === item[1]
       )
+      // console.log(itemFromDiff)
       if (itemFromDiff) {
         const [col, row] = itemFromDiff.element
-        inputArray[col][row] = '0'
+        //
+        let spl = inputArray[col].split('')
+        spl[row] = '*'
+        inputArray[col] = spl.join('')
+        //
         diffs = diffs.filter(
           el => el.element[0] !== col || el.element[1] !== row
         )
@@ -152,7 +162,12 @@ function findAdjacentElementsOfdiffs (col, row, connected) {
     const [dirCol, dirRow] = dir
     const [newCol, newRow] = [col + dirCol, row + dirRow]
 
-    if (!inputArray[newCol] || !inputArray[newCol][newRow]) {
+    if (
+      !inputArray[newCol] ||
+      !inputArray[newCol][newRow] ||
+      inputArray[newCol][newRow] === '*'
+    ) {
+      console.log('BOY', col, row, inputArray[col][row])
       isFalse = true
       continue objectLoop
     }
@@ -164,6 +179,9 @@ function findAdjacentElementsOfdiffs (col, row, connected) {
   }
 
   if (isFalse) {
+    let spl = inputArray[col].split('')
+    spl[row] = '*'
+    inputArray[col] = spl.join('')
     recorsivePrinter(connected)
   }
 }
@@ -173,16 +191,50 @@ for (let { element, diff } of diffs) {
   for (let i = 1; i < diff; i++) {
     diffs.push({
       element: [col, row + i],
-      diff: 0,
       connected: []
     })
   }
 }
 
+console.log(diffs)
+
 diffs.sort((a, b) => a.element[0] - b.element[0])
+
+for (let col = 0; col < inputArray.length; col++) {
+  let len = inputArray[col].length
+  for (let row = 0; row < len; row++) {
+    let isNotInsideDiffs = !diffs.some(({ element }) => {
+      return element[0] === col && element[1] === row
+    })
+    let isNotInsideVisited = !visited.some(
+      ([ecol, erow]) => ecol === col && erow === row
+    )
+
+    if (isNotInsideDiffs && isNotInsideVisited) {
+      let spl = inputArray[col].split('')
+      spl[row] = '*'
+      inputArray[col] = spl.join('')
+    }
+  }
+}
+
+diffs.forEach(({ element }) => {
+  let spl = inputArray[element[0]].split('')
+  spl[element[1]] = 'I'
+  inputArray[element[0]] = spl.join('')
+})
 
 for (let { element, connected } of diffs) {
   const [col, row] = element
   findAdjacentElementsOfdiffs(col, row, connected)
 }
-// console.log(diffs, diffs.length)
+
+console.log(diffs.length)
+
+console.log(
+  inputArray,
+  inputArray
+    .join('')
+    .split('')
+    .filter(el => el === 'I').length
+)
