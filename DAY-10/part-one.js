@@ -1,6 +1,8 @@
 const { readFileSync } = require('fs')
-let inputArray = readFileSync('sample', 'utf-8').split('\r\n')
-
+let inputArray = readFileSync('sample', 'utf-8')
+  .split('\r\n')
+  .map(el => el.split(''))
+console.log(inputArray)
 function ifTheyFit (currentElement, nextElement) {
   const arrays = [
     'F,7',
