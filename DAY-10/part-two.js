@@ -1,6 +1,7 @@
 // const { readFileSync } = require('fs')
 
-// const sample = `.#.#.#.#.#.#.#.#.#.
+// const sample = `
+// .#.#.#.#.#.#.#.#.#.
 // ###################
 // .#S-------------7#.
 // ##|#############|##
@@ -16,7 +17,8 @@
 // ##|#####|#|#####|##
 // .#L-----J#L-----J#.
 // ###################
-// .#.#.#.#.#.#.#.#.#.`
+// .#.#.#.#.#.#.#.#.#.
+
 // let inputArray = sample.split('\n')
 
 // // let startingPosCol = inputArray.findIndex(el => el.indexOf('S') >= 0)
