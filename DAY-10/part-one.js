@@ -1,8 +1,7 @@
 const { readFileSync } = require('fs')
-let inputArray = readFileSync('sample', 'utf-8')
-  .split('\r\n')
-  .map(el => el.split(''))
-console.log(inputArray)
+let inputArray = readFileSync(process.argv[2] || 'sample', 'utf-8').split(
+  '\r\n'
+)
 function ifTheyFit (currentElement, nextElement) {
   const arrays = [
     'F,7',
@@ -157,7 +156,7 @@ for (let i = 0; i < visited.length - 1; i++) {
 
   let tmp = inputArray[currentEl[0]].split('')
   if (rowDiff >= 1)
-    for (let j = 1; j <= rowDiff; j++) tmp[j + currentEl[1]] = '+'
+    for (let j = 1; j <= rowDiff; j++) tmp[j + currentEl[1]] = 'I'
 
   inputArray[currentEl[0]] = tmp.join('')
 }
@@ -188,9 +187,7 @@ for (let i = 0; i < inputArray.length - 1; i++) {
     if (!theyFitVertically(currentElement, nextElement)) {
       theyDontConnect = true
       newInputArray.push('#')
-    } else {
-      newInputArray.push('|')
-    }
+    } else newInputArray.push('|')
   }
   if (theyDontConnect) {
     inputArray = [
@@ -203,82 +200,81 @@ for (let i = 0; i < inputArray.length - 1; i++) {
 }
 visited = handleVisits()
 let diffs = []
+let sum2 = 0
 
 for (let i = 0; i < inputArray.length; i++) {
-  for (let j = 0; j < inputArray[i].length; j++) {
-    if (inputArray[i][j] === '+') diffs.push([i, j])
-  }
+  for (let j = 0; j < inputArray[i].length; j++)
+    if (inputArray[i][j] === 'I') diffs.push([i, j])
 }
 
-let count = 0
 let visitedMap = {}
-let correctElements = []
-let walkElements = []
-const duplicate = []
-function doWalk (col, row) {
-  function walk (col, row) {
-    console.log(count++)
-    if (
-      visited.some(([elc, elr]) => elc === col && row === elr) ||
-      visitedMap[`${col},${row}`]
-    ) {
-      return false
-    }
 
+function walkStack (ogCol, ogRow) {
+  function isValid (col, row) {
+    if (inputArray[col]?.[row] === 'x') {
+      for (let [ecol, erow] of visitedElements) {
+        if (inputArray[ecol] && inputArray[ecol][erow]) {
+          let tmp = inputArray[ecol].split('')
+          if (tmp[erow] === 'I') tmp[erow] = 'X'
+          inputArray[ecol] = tmp.join('')
+        }
+      }
+      return
+    }
+    if (visitedMap[`${col},${row}`]) return false
+    if (visited.some(([elc, elr]) => elc === col && row === elr)) return false
+    if (que.some(([elc, elr]) => elc === col && row === elr)) return false
     if (
       row <= 0 ||
       row >= inputArray[0].length ||
       col < 0 ||
-      col >= inputArray.length
+      col >= inputArray.length ||
+      inputArray[col][row] === 'X'
     ) {
-      const keys = Object.keys(visitedMap).map(key =>
-        key.split(',').map(el => parseInt(el))
-      )
+      allAreInvalid = true
 
-      for (let [elc, elr] of keys) {
-        const index = diffs.findIndex(el => el[0] === elc && el[1] === elr)
-        if (index >= 0) diffs.splice(index, 1)
-      }
-      return false
+      return
     }
+    que.push([col, row])
+  }
+
+  let que = [[ogCol, ogRow]]
+
+  let visitedElements = [[ogCol, ogRow]]
+
+  let allAreInvalid = false
+
+  while (que.length) {
+    const [col, row] = que.shift()
+    // FUCKKKKKKKKKKKKKKKKKKKKKKKK
+    // console.log('why stuck', col, row)
 
     visitedMap[`${col},${row}`] = true
+    visitedElements.push([col, row])
 
-    duplicate.push([col, row])
-
-    let answer = []
-
-    answer.push(
-      walk(col, row + 1),
-      walk(col, row - 1),
-      walk(col - 1, row),
-      walk(col + 1, row)
-    )
-    // console.log('lolsy', answer)
-
-    return true
+    isValid(col - 1, row)
+    isValid(col, row + 1)
+    isValid(col + 1, row)
+    isValid(col, row - 1)
   }
-  walk(col, row)
-
-  const keys = Object.keys(visitedMap).map(key =>
-    key.split(',').map(el => parseInt(el))
-  )
-  for (let [elc, elr] of keys) {
-    const index = diffs.findIndex(el => el[0] === elc && el[1] === elr)
-    if (index >= 0) {
-      correctElements.push(diffs[index])
-      diffs.splice(index, 1)
+  if (allAreInvalid) {
+    for (let [ecol, erow] of visitedElements) {
+      if (inputArray[ecol] && inputArray[ecol][erow]) {
+        let tmp = inputArray[ecol].split('')
+        if (tmp[erow]) tmp[erow] = 'X'
+        inputArray[ecol] = tmp.join('')
+      }
     }
   }
 }
-console.log(inputArray.length)
 
-for (let i = 0; i < diffs.length; i++) {
-  let [col, row] = diffs[i]
-  console.log(col, row)
-  doWalk(col, row)
+console.log('BEGIN', diffs.length)
+
+for (let [col, row] of diffs) walkStack(col, row)
+
+let sum = 0
+
+for (let line of inputArray) {
+  for (let char of line) if (char === 'I') sum++
 }
-
-console.log(correctElements, duplicate.length)
-
-console.log(inputArray)
+console.log(sum)
